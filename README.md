@@ -1,4 +1,4 @@
-# jwt
+# GJWT
 
 [![Package Version](https://img.shields.io/hexpm/v/gjwt)](https://hex.pm/packages/gjwt)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gjwt/)
