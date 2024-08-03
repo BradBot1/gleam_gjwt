@@ -1,0 +1,17 @@
+name = "gjwt"
+version = "1.0.0"
+
+description = "A gleam abstraction to interact with erlang_jose for JWT's"
+licences = ["Apache-2.0"]
+repository = { type = "github", user = "BradBot1", repo = "gleam_gjwt" }
+
+[dependencies]
+gleam_stdlib = ">= 0.34.0 and < 2.0.0"
+jose = ">= 1.11.10 and < 2.0.0"
+gleam_json = ">= 2.0.0 and < 3.0.0"
+birl = ">= 1.7.1 and < 2.0.0"
+ojson = ">= 1.0.0 and < 2.0.0"
+gleam_erlang = ">= 0.25.0 and < 1.0.0"
+
+[dev-dependencies]
+gleeunit = ">= 1.0.0 and < 2.0.0"
