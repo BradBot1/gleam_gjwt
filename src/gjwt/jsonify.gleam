@@ -11,25 +11,37 @@
 //  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
+import gleam/bit_array
 import gleam/dict
 import gleam/dynamic
 import gleam/json
+import gleam/list
 
 pub fn jsonify(dyn: dynamic.Dynamic) -> json.Json {
   case dynamic.classify(dyn) {
-    "String" -> dynamic.unsafe_coerce(dyn) |> json.string
-    "Float" -> dynamic.unsafe_coerce(dyn) |> json.float
-    "Int" -> dynamic.unsafe_coerce(dyn) |> json.int
-    "Bool" -> dynamic.unsafe_coerce(dyn) |> json.bool
-    "BitArray" -> dynamic.unsafe_coerce(dyn)
+    "String" -> dyn |> dynamic.string |> force_result |> json.string
+    "Float" -> dyn |> dynamic.float |> force_result |> json.float
+    "Int" -> dyn |> dynamic.int |> force_result |> json.int
+    "Bool" -> dyn |> dynamic.bool |> force_result |> json.bool
+    "BitArray" ->
+      dyn
+      |> dynamic.bit_array
+      |> force_result
+      |> bit_array.base64_url_encode(True)
+      |> json.string
     "Map" | "Dict" ->
-      dynamic.unsafe_coerce(dyn)
+      dyn
       |> dynamic.dict(dynamic.string, dynamic.dynamic)
       |> force_result
       |> dict.map_values(fn(_, value) { jsonify(value) })
       |> dict.to_list
       |> json.object
-    "List" -> dynamic.unsafe_coerce(dyn) |> json.array(jsonify)
+    "List" ->
+      dyn
+      |> dynamic.list(dynamic.dynamic)
+      |> force_result
+      |> list.map(jsonify)
+      |> json.preprocessed_array()
     unkown ->
       panic as {
         "Unkown type "
