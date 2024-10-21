@@ -1,5 +1,5 @@
 name = "gjwt"
-version = "1.0.2"
+version = "1.0.3"
 
 description = "A gleam abstraction to interact with erlang_jose for JWT's"
 licences = ["Apache-2.0"]
