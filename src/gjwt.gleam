@@ -18,7 +18,6 @@ import gleam/bit_array
 import gleam/dict
 import gleam/dynamic
 import gleam/erlang/atom
-import gleam/io
 import gleam/list
 
 pub type JWT =
@@ -57,7 +56,6 @@ pub fn verify(jwt_as_string: String, key: key.Key) -> Bool {
 
 pub fn from_jwt(jwt_as_string: String, key: key.Key) -> Result(JWT, Nil) {
   let res = do_from_jwt(jwt_as_string, <<key.kty:utf8>>, key.key)
-  io.debug(res)
   case res.0 {
     True ->
       Ok(#(
