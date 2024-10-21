@@ -1,7 +1,4 @@
-import birl
-import birl/duration
 import gjwt.{add_claim, add_header, from_jwt, new, sign_off, verify}
-import gjwt/claim.{expiration_time}
 import gjwt/key.{from_string}
 import gjwt/payload
 import gleam/dynamic
