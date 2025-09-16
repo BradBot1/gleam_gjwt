@@ -14,44 +14,28 @@
 import gleam/bit_array
 import gleam/dict
 import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/json
-import gleam/list
 
 pub fn jsonify(dyn: dynamic.Dynamic) -> json.Json {
-  case dynamic.classify(dyn) {
-    "String" -> dyn |> dynamic.string |> force_result |> json.string
-    "Float" -> dyn |> dynamic.float |> force_result |> json.float
-    "Int" -> dyn |> dynamic.int |> force_result |> json.int
-    "Bool" -> dyn |> dynamic.bool |> force_result |> json.bool
-    "BitArray" ->
-      dyn
-      |> dynamic.bit_array
-      |> force_result
-      |> bit_array.base64_url_encode(True)
-      |> json.string
-    "Map" | "Dict" ->
-      dyn
-      |> dynamic.dict(dynamic.string, dynamic.dynamic)
-      |> force_result
-      |> dict.map_values(fn(_, value) { jsonify(value) })
-      |> dict.to_list
-      |> json.object
-    "List" ->
-      dyn
-      |> dynamic.list(dynamic.dynamic)
-      |> force_result
-      |> list.map(jsonify)
-      |> json.preprocessed_array()
-    unkown ->
-      panic as {
-        "Unkown type "
-        <> unkown
-        <> " was provided! Make sure to convert this type to JSON before adding to JWT payload!"
-      }
-  }
-}
-
-fn force_result(res: Result(a, dynamic.DecodeErrors)) -> a {
-  let assert Ok(value) = res
-  value
+  let decoder =
+    decode.one_of(decode.string |> decode.map(json.string), or: [
+      decode.int |> decode.map(json.int),
+      decode.float |> decode.map(json.float),
+      decode.bool |> decode.map(json.bool),
+      decode.bit_array
+        |> decode.map(fn(v) { bit_array.base64_encode(v, True) |> json.string }),
+      decode.dict(decode.string, decode.dynamic |> decode.map(jsonify))
+        |> decode.map(fn(v) { dict.to_list(v) |> json.object }),
+      decode.list(decode.dynamic |> decode.map(jsonify))
+        |> decode.map(json.preprocessed_array),
+      decode.failure(
+        json.null(),
+        "Unknown type "
+          <> dynamic.classify(dyn)
+          <> " was provided! Make sure to convert this type to JSON before adding to JWT payload!",
+      ),
+    ])
+  let assert Ok(json) = decode.run(dyn, decoder)
+  json
 }

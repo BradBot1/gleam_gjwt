@@ -38,7 +38,7 @@ pub fn add_claim(jwt: JWT, claim: #(String, dynamic.Dynamic)) -> JWT {
 pub fn sign_off(jwt: JWT, key: key.Key) -> String {
   case
     bit_array.to_string(do_to_jwt(
-      [#("alg", dynamic.from(key.algorithm)), ..{ jwt.0 }.entries]
+      [#("alg", dynamic.string(key.algorithm)), ..{ jwt.0 }.entries]
         |> dict.from_list,
       <<key.kty:utf8>>,
       { jwt.1 }.claims |> dict.from_list,
@@ -60,14 +60,11 @@ pub fn from_jwt(jwt_as_string: String, key: key.Key) -> Result(JWT, Nil) {
     True ->
       Ok(#(
         header.Header(
-          { res.2 }.3
+          res.2.3
           |> dict.to_list
-          |> list.key_set(
-            "alg",
-            dynamic.from(atom.to_string({ { res.2 }.1 }.1)),
-          ),
+          |> list.key_set("alg", dynamic.string(atom.to_string(res.2.1.1))),
         ),
-        payload.Payload({ res.1 }.1 |> dict.to_list),
+        payload.Payload(res.1.1 |> dict.to_list),
       ))
     False -> Error(Nil)
   }
