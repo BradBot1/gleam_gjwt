@@ -14,6 +14,7 @@
 import gjwt/claim
 import gjwt/jsonify
 import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/json
 import gleam/list
 
@@ -28,7 +29,7 @@ pub fn new() -> Payload {
 pub fn get_claim(
   payload: Payload,
   key: String,
-  decoder: dynamic.Decoder(a),
+  decoder: decode.Decoder(a),
 ) -> Result(a, claim.Error) {
   claim.get_claim(payload.claims, key, decoder)
 }

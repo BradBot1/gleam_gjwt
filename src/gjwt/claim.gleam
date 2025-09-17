@@ -13,6 +13,7 @@
 //  limitations under the License.
 import birl
 import gleam/dynamic
+import gleam/dynamic/decode
 import gleam/list
 import gleam/order
 import gleam/result
@@ -26,17 +27,18 @@ pub type Claim =
 
 pub type Error {
   NoClaim
-  ClaimDecode(errors: dynamic.DecodeErrors)
+  ClaimDecode(errors: List(decode.DecodeError))
 }
 
 pub fn get_claim(
   claims: Claims,
   key: String,
-  decoder: dynamic.Decoder(a),
+  decoder: decode.Decoder(a),
 ) -> Result(a, Error) {
   case list.key_find(claims, key) {
     Ok(claim) ->
-      decoder(claim) |> result.map_error(fn(err) { ClaimDecode(err) })
+      decode.run(claim, decoder)
+      |> result.map_error(fn(err) { ClaimDecode(err) })
     Error(_) -> Error(NoClaim)
   }
 }
@@ -56,75 +58,73 @@ pub fn remove_claim(claims: Claims, key: String) -> Claims {
 pub const issuer_key = "iss"
 
 pub fn issuer(issuer: String) -> Claim {
-  #(issuer_key, dynamic.from(issuer))
+  #(issuer_key, dynamic.string(issuer))
 }
 
 pub fn get_issuer(claims: Claims) -> Result(String, Error) {
-  get_claim(claims, issuer_key, dynamic.string)
+  get_claim(claims, issuer_key, decode.string)
 }
 
 pub const subject_key = "sub"
 
 pub fn subject(subject: String) -> Claim {
-  #(subject_key, dynamic.from(subject))
+  #(subject_key, dynamic.string(subject))
 }
 
 pub fn get_subject(claims: Claims) -> Result(String, Error) {
-  get_claim(claims, subject_key, dynamic.string)
+  get_claim(claims, subject_key, decode.string)
 }
 
 pub const audience_key = "aud"
 
 pub fn audience(audience: List(String)) -> Claim {
-  #(audience_key, dynamic.from(audience))
+  #(audience_key, audience |> list.map(dynamic.string) |> dynamic.list)
 }
 
 pub fn get_audience(claims: Claims) -> Result(List(String), Error) {
-  get_claim(claims, audience_key, dynamic.list(dynamic.string))
+  get_claim(claims, audience_key, decode.list(decode.string))
 }
 
 pub const expiration_time_key = "exp"
 
 pub fn expiration_time(expiration_time: birl.Time) -> Claim {
-  #(expiration_time_key, dynamic.from(birl.to_unix(expiration_time)))
+  #(expiration_time_key, dynamic.int(birl.to_unix(expiration_time)))
 }
 
 pub fn get_expiration_time(claims: Claims) -> Result(birl.Time, Error) {
-  get_claim(claims, expiration_time_key, parse_birl_time)
+  get_claim(claims, expiration_time_key, birl_time_decoder())
 }
 
 pub const not_before_key = "sub"
 
 pub fn not_before(not_before: birl.Time) -> Claim {
-  #(not_before_key, dynamic.from(birl.to_unix(not_before)))
+  #(not_before_key, dynamic.int(birl.to_unix(not_before)))
 }
 
 pub fn get_not_before(claims: Claims) -> Result(birl.Time, Error) {
-  get_claim(claims, not_before_key, parse_birl_time)
+  get_claim(claims, not_before_key, birl_time_decoder())
 }
 
 pub const issued_at_key = "iat"
 
 pub fn issued_at(issued_at: birl.Time) -> Claim {
-  #(issued_at_key, dynamic.from(birl.to_unix(issued_at)))
+  #(issued_at_key, dynamic.int(birl.to_unix(issued_at)))
 }
 
 pub fn get_issued_at(claims: Claims) -> Result(birl.Time, Error) {
-  get_claim(claims, issued_at_key, parse_birl_time)
+  get_claim(claims, issued_at_key, birl_time_decoder())
 }
 
 pub const jwt_id_key = "jti"
 
 pub fn jwt_id(jwt_id: String) -> Claim {
-  #(jwt_id_key, dynamic.from(jwt_id))
+  #(jwt_id_key, dynamic.string(jwt_id))
 }
 
 pub fn get_jwt_id(claims: Claims) -> Result(String, Error) {
-  get_claim(claims, jwt_id_key, dynamic.string)
+  get_claim(claims, jwt_id_key, decode.string)
 }
 
-fn parse_birl_time(
-  dyn: dynamic.Dynamic,
-) -> Result(birl.Time, dynamic.DecodeErrors) {
-  dynamic.int(dyn) |> result.map(birl.from_unix(_))
+fn birl_time_decoder() -> decode.Decoder(birl.Time) {
+  decode.int |> decode.map(birl.from_unix)
 }
