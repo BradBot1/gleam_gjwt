@@ -1,4 +1,4 @@
-%   Copyright 2024 BradBot_1
+%   Copyright 2026 BradBot_1
 
 %   Licensed under the Apache License, Version 2.0 (the "License");
 %   you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 -export([to_jwt/4]).
 -export([verify/3]).
 -export([from_jwt/3]).
+-export([from_jwt_strict/4]).
 
 to_jwt(Protected, Kty, Payload, Key) ->
     element(2, jose_jws:compact(jose_jwt:sign(#{
@@ -31,3 +32,9 @@ from_jwt(Jwt, Kty, Key) ->
         <<"kty">> => Kty,
         <<"k">> => jose_base64url:encode(Key)
     }, Jwt).
+
+from_jwt_strict(Jwt, Kty, Key, Allow) ->
+    jose_jwt:verify_strict(#{
+        <<"kty">> => Kty,
+        <<"k">> => jose_base64url:encode(Key)
+    }, [Allow], Jwt).

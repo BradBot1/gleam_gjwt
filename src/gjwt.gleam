@@ -1,4 +1,4 @@
-//  Copyright 2024 BradBot_1
+//  Copyright 2026 BradBot_1
 
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -55,7 +55,8 @@ pub fn verify(jwt_as_string: String, key: key.Key) -> Bool {
 }
 
 pub fn from_jwt(jwt_as_string: String, key: key.Key) -> Result(JWT, Nil) {
-  let res = do_from_jwt(jwt_as_string, <<key.kty:utf8>>, key.key)
+  let res =
+    do_from_jwt_strict(jwt_as_string, <<key.kty:utf8>>, key.key, key.algorithm)
   case res.0 {
     True ->
       Ok(#(
@@ -81,11 +82,12 @@ fn do_to_jwt(
 @external(erlang, "gjwt_ffi", "verify")
 fn do_verify(token: String, kty: BitArray, key: BitArray) -> Bool
 
-@external(erlang, "gjwt_ffi", "from_jwt")
-fn do_from_jwt(
+@external(erlang, "gjwt_ffi", "from_jwt_strict")
+fn do_from_jwt_strict(
   token: String,
   kty: BitArray,
   key: BitArray,
+  allow: String,
 ) -> #(
   Bool,
   #(Nil, dict.Dict(String, dynamic.Dynamic)),
